@@ -24,6 +24,6 @@ public class ProjectManagementApplication extends Application {
     }
 
     private static void initializeDatabase() {
-        DbHelper.getInstance().getWritableDatabase();
+        DbHelper.getInstance().getWritableDatabase().close();
     }
 }
