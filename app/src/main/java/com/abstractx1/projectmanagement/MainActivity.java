@@ -19,6 +19,10 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
+import com.abstractx1.projectmanagement.models.Project;
+
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     /**
@@ -58,6 +62,14 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                try {
+                    List<Project> projects = Project.getAll();
+                    for (Project project : projects) {
+                        ProjectManagementApplication.log("Project id:" + project.id + " name:" + project.name + " created_at:" + project.created_at.toString());
+                    }
+                } catch (Exception e) {
+                    ProjectManagementApplication.log(e);
+                }
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
