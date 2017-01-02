@@ -33,7 +33,7 @@ public class ModelFactory {
         SQLiteDatabase db = DbHelper.getInstance().getWritableDatabase();
         Cursor cursor = db.rawQuery(selectQuery, null);
 
-        ProjectManagementApplication.log("execute SQL projects all");
+        ProjectManagementApplication.log("execute query: " + selectQuery);
         if (cursor.moveToFirst()) {
             do {
                 Object model = modelTableInfo.getModelClass().newInstance();
@@ -55,6 +55,9 @@ public class ModelFactory {
             } while (cursor.moveToNext());
         }
 
+        cursor.close();
+        db.close();
+
         return models;
     }
 
@@ -67,7 +70,7 @@ public class ModelFactory {
     private static void setBoolField(Object object, String fieldName, int value)
             throws NoSuchFieldException, IllegalAccessException {
         Field field = object.getClass().getDeclaredField(fieldName);
-        boolean bool = value > 0 ? true : false;
+        boolean bool = value > 0;
         field.setBoolean(object, bool);
     }
 
