@@ -31,17 +31,17 @@ public abstract class ModelTableInfo {
         Map<String, String> _columnTypeNameMap = new HashMap<String, String>();
 
         Cursor cursor = SQLiteSession.getInstance().query("PRAGMA table_info(" + getTableName() + ")");
-        if (cursor.moveToFirst()) {
+        if (cursor != null) {
             do {
                 String columnName = cursor.getString(cursor.getColumnIndexOrThrow(SQLite.TABLE_INFO_COLUMN_NAME));
                 String dataType = cursor.getString(cursor.getColumnIndexOrThrow(SQLite.TABLE_INFO_COLUMN_TYPE));
                 _columnTypeNameMap.put(columnName, dataType);
                 ProjectManagementApplication.log("retrieving column datatype map name: " + columnName + " type: " + dataType);
             } while (cursor.moveToNext());
+            cursor.close();
         } else {
             throw  new RuntimeException("error accessing table_info for table " + getTableName() );
         }
-        cursor.close();
 
         columnTypeNameMap = Collections.unmodifiableMap(_columnTypeNameMap);
 

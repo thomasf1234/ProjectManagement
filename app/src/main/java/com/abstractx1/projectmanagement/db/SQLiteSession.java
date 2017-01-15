@@ -53,6 +53,10 @@ public class SQLiteSession extends SQLiteOpenHelper {
         }
     }
 
+    public synchronized void clear() {
+        exec("DELETE FROM projects");
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         Schema.create(db);
