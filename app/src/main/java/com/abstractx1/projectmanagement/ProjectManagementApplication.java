@@ -4,7 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
-import com.abstractx1.projectmanagement.db.DbHelper;
+import com.abstractx1.projectmanagement.db.SQLiteSession;
 
 /**
  * Created by tfisher on 29/12/2016.
@@ -67,6 +67,6 @@ public class ProjectManagementApplication extends Application {
     }
 
     private static void initializeDatabase() {
-        DbHelper.getInstance().getWritableDatabase().close();
+        SQLiteSession.getInstance().getWritableDatabase().close();
     }
 }
