@@ -1,17 +1,17 @@
 package com.abstractx1.projectmanagement;
 
+import android.app.Activity;
 import android.app.Application;
-import android.content.Context;
 import android.util.Log;
-
-import com.abstractx1.projectmanagement.db.SQLiteSession;
+import android.view.Gravity;
+import android.widget.Toast;
 
 /**
  * Created by tfisher on 29/12/2016.
  */
 
 public class ProjectManagementApplication extends Application {
-    private static Context mContext;
+    public static final String DB_NAME = "com.abstractx1.project_management.db";
     // uncaught exception handler variable
     private Thread.UncaughtExceptionHandler defaultUEH;
 
@@ -37,8 +37,6 @@ public class ProjectManagementApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        mContext = getApplicationContext();
-        initializeDatabase();
     }
 
     public static void log(Throwable e) {
@@ -60,13 +58,5 @@ public class ProjectManagementApplication extends Application {
     }
     public static String getLogKey() {
         return "DEBUG-" + getClassName();
-    }
-
-    public static Context getAppContext() {
-        return mContext;
-    }
-
-    private static void initializeDatabase() {
-        SQLiteSession.getInstance().getWritableDatabase().close();
     }
 }

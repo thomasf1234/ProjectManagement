@@ -1,12 +1,16 @@
 package com.abstractx1.projectmanagement;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -17,16 +21,38 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ExpandableListView;
+import android.widget.ListView;
 import android.widget.TextView;
 
-import com.abstractx1.projectmanagement.db.SQLiteSession;
+import com.abstractx1.androidsql.ModelDAO;
+import com.abstractx1.projectmanagement.adapters.ProjectsListViewAdapter;
+import com.abstractx1.projectmanagement.db.SchemaV1;
+import com.abstractx1.projectmanagement.dialogs.AddProjectDialog;
+import com.abstractx1.projectmanagement.dialogs.DeleteProjectConfirmationDialog;
+import com.abstractx1.projectmanagement.dialogs.RenameProjectDialog;
 import com.abstractx1.projectmanagement.models.Project;
 
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity  {
+    ModelDAO modelDAO;
+    List<Project> projects;
+    ProjectsListViewAdapter projectsListViewAdapter;
 
+    public void syncProjects() {
+        try {
+            projects = modelDAO.findAll(Project.class);
+            projectsListViewAdapter.clear();
+            projectsListViewAdapter.addAll(projects);
+            projectsListViewAdapter.notifyDataSetChanged();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -44,6 +70,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        this.modelDAO = new ModelDAO(getApplicationContext(), ProjectManagementApplication.DB_NAME, new SchemaV1());
         ProjectManagementApplication.log("MainActivity#onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -56,10 +83,6 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -71,45 +94,30 @@ public class MainActivity extends AppCompatActivity
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
-        Project project = new Project();
-        project.name = "MyOther's Project";
-        try {
-            project.save();
-        } catch (Exception e) {
-            ProjectManagementApplication.log(e);
-        }
 
-        try {
-            ProjectManagementApplication.log("Project id:" + project.getId() + " name:" + project.getName() + " created_at:" + project.getCreatedAt().toString());
-        } catch (Exception e) {
-            ProjectManagementApplication.log(e);
-        }
+        syncProjects();
+        projectsListViewAdapter = new ProjectsListViewAdapter(this, projects);
+        ListView projectListView = (ListView) findViewById(R.id.project_list_view);
+        projectListView.setAdapter(projectsListViewAdapter);
+        registerForContextMenu(projectListView);
+        //https://www.mikeplate.com/2010/01/21/show-a-context-menu-for-long-clicks-in-an-android-listview/
 
-//        try {
-//            List<Project> projects = Project.getAll();
-//            for (Project _project : projects) {
-//                ProjectManagementApplication.log("Project id:" + _project.getId() + " name:" + _project.getName() + " created_at:" + _project.getCreatedAt().toString());
-//            }
-//        } catch (Exception e) {
-//            ProjectManagementApplication.log(e);
-//        }
 
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                try {
-//                    List<Project> projects = Project.getAll();
-//                    for (Project project : projects) {
-//                        ProjectManagementApplication.log("Project id:" + project.id + " name:" + project.name + " created_at:" + project.created_at.toString());
-//                    }
-//                } catch (Exception e) {
-//                    ProjectManagementApplication.log(e);
-//                }
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.add_project_fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AddProjectDialog.create(MainActivity.this).show();
+            }
+        });
+
+        fab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Utilities.alert(MainActivity.this, "Add Project");
+                return true;
+            }
+        });
     }
 
     @Override
@@ -124,7 +132,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
-        SQLiteSession.getInstance().close();
+        modelDAO.finish();
         super.onDestroy();
     }
 
@@ -150,31 +158,30 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+    public void onCreateContextMenu(ContextMenu menu, View view, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, view, menuInfo);
+        if (view.getId()== R.id.project_list_view) {
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.projects_context_menu, menu);
         }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
 
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        Project selectedProject = projects.get(info.position);
+        switch(item.getItemId()) {
+            case R.id.rename:
+                RenameProjectDialog.create(this, selectedProject).show();
+                return true;
+            case R.id.delete:
+                DeleteProjectConfirmationDialog.create(this, selectedProject).show();
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -240,6 +247,7 @@ public class MainActivity extends AppCompatActivity
             return fragment;
         }
 
+        //Tab page view
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
