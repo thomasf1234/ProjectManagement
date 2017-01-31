@@ -1,1 +1,1 @@
-include ':app', ':androidsql-debug'
+include ':app'
